@@ -25,7 +25,231 @@ from collegeplacement CP ;
  -----------  Count how many students have more than 2 internships.
  SELECT College_ID,IQ,Projects_Completed
  FROM collegeplacement CP
- WHERE Projects_Completed > 2
+ WHERE Projects_Completed > 2    
+
+    Intermediate (Aggregations & Grouping)
+  
+  
+   -------------- Count placed vs not placed students.
+
+ SELECT placement, COUNT(*) AS total_students
+FROM collegeplacement CP
+GROUP BY placement;
+
+SELECT 
+    COUNT(CASE WHEN placement = 'Yes' THEN 1 END) AS placed_students,
+    COUNT(CASE WHEN placement = 'No'  THEN 1 END) AS not_placed_students
+FROM collegeplacement CP;
+ 
+ 
+ 
+   ----------------- Find the average CGPA of placed students.
+ SELECT COLLEGE_ID, PLACEMENT, AVG(CGPA) AS avg_cgpa
+FROM collegeplacement
+where placement = 'Yes'
+GROUP BY COLLEGE_ID, PLACEMENT;
+
+SELECT AVG(CGPA) AS avg_cgpa
+FROM collegeplacement
+WHERE PLACEMENT = 'YES';
+ 
+  
+
+ --------------- Show placement rate by PROJECTS COMPLETED 
+SELECT PROJECTS_COMPLETED,
+       COUNT(*) AS total_students,
+       SUM(CASE WHEN Placement = 'Yes' THEN 1 ELSE 0 END) AS placed_students,
+       ROUND(100.0 * SUM(CASE WHEN Placement = 'Yes' THEN 1 ELSE 0 END) / COUNT(*), 2) AS placement_rate
+FROM collegeplacement
+GROUP BY PROJECTS_COMPLETED;
+
+SELECT 
+    Placement,
+    COUNT(*) AS total_students,
+    ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM collegeplacement), 2) AS placement_rate
+FROM collegeplacement
+GROUP BY Placement;
+
+  
+ 
+ ------------   Show average salary by degree
+ SELECT Placement,
+       AVG(Internship_Experience) AS Avg_Internship,
+       AVG(Projects_Completed)    AS Avg_Projects,
+       AVG(Extra_Curricular_Score) AS Avg_Extra,
+       AVG(Communication_Skills)   AS Avg_Comm
+FROM collegeplacement
+GROUP BY Placement;
+
+
+----------------- Top 10 Students by CGPA 
+ SELECT College_ID,
+       CGPA,
+       IQ,
+       Prev_Sem_Result,
+       Academic_Performance,
+       Internship_Experience,
+       Extra_Curricular_Score,
+       Communication_Skills,
+       Projects_Completed,
+       Placement
+FROM collegeplacement
+ORDER BY CGPA DESC
+LIMIT 10;
+
+---- here i find the how many studnet who have cgpa from above 10
+WITH COUNT_10CGPA AS (
+    SELECT CGPA
+    FROM collegeplacement
+    WHERE CGPA > 10
+)
+SELECT COUNT(*) AS ten_CGPA_Count
+FROM COUNT_10CGPA;
+
+----------------- Compare placement rate across different internship counts.
+ SELECT Internship_Experience,
+       COUNT(*) AS total_students,
+       SUM(CASE WHEN Placement = 'Yes' THEN 1 ELSE 0 END) AS placed_students,
+       ROUND(100.0 * SUM(CASE WHEN Placement = 'Yes' THEN 1 ELSE 0 END) / COUNT(*), 2) AS placement_rate
+FROM collegeplacement
+GROUP BY Internship_Experience;
+
+
+-------------- Find the COLLEGE_ID with the highest average CGPA
+ SELECT College_ID,
+       AVG(CGPA) AS avg_cgpa
+FROM CollegePlacement
+GROUP BY College_ID
+ORDER BY avg_cgpa DESC
+LIMIT 1;
+
+ -------- List students who got CGPA above the average CGPA.
+    SELECT College_ID, avg(CGPA)
+    FROM COLLEGEPLACEMENT
+    GROUP BY College_ID
+    HAVING AVG(CGPA) > 'CGPA';
+    
+    SELECT College_ID, CGPA
+FROM CollegePlacement
+WHERE CGPA > (
+    SELECT AVG(CGPA)
+    FROM CollegePlacement
+);
+
+
+--------  Find students with CGPA > 9 who are not placed.
+select *
+from collegeplacement
+where placement = 'NO'
+and CGPA > 9;
+
+
+
+Compare the highest and lowest CGPA within each College_ID.
+(
+   SELECT COLLEGE_ID , MAX(CGPA) AS CGPA, 'Highest' AS Type
+   FROM CollegePlacement
+   GROUP BY COLLEGE_ID 
+)
+UNION ALL
+(
+   SELECT COLLEGE_ID, MIN(CGPA) AS CGPA, 'Lowest' AS Type
+   FROM CollegePlacement
+   GROUP BY COLLEGE_ID 
+);
+
+SELECT College_ID, 
+       MAX(CGPA) AS Highest_CGPA, 
+       MIN(CGPA) AS Lowest_CGPA
+FROM CollegePlacement
+GROUP BY College_ID;
+
+---- THIRD OPTION 
+SELECT CGPA, COLLEGE_ID
+FROM COLLEGEPLACEMENT;
+SELECT College_ID, COUNT(*) AS Total
+FROM CollegePlacement
+GROUP BY College_ID
+HAVING COUNT(*) > 1;
+   
+   
+----- Compare placement rates between students with internships vs. without internships.
+
+   SELECT 
+    Internship_Experience,
+    COUNT(*) AS total_students,
+    SUM(CASE WHEN Placement = 'Yes' THEN 1 ELSE 0 END) AS placed_students,
+    ROUND(
+        100.0 * SUM(CASE WHEN Placement = 'Yes' THEN 1 ELSE 0 END) / COUNT(*), 
+        2
+    ) AS placement_rate
+FROM collegeplacement
+GROUP BY Internship_Experience;
+   
+-----------  List students who have high CGPA (>8) but are not placed.
+SELECT 
+    college_id, 
+    CGPA, 
+    placement
+FROM COLLEGEPLACEMENT
+WHERE CGPA > 8 
+  AND placement = 'NO';
+  
+  ---- 2
+  SELECT 
+    college_id, 
+    CGPA,
+    placement,
+    CASE 
+        WHEN CGPA > 8 AND placement = 'NO' THEN 'High CGPA - Not Placed'
+    END AS status
+FROM collegeplacement;
+
+
+
+SELECT 
+    college_id, 
+    CGPA, 
+    placement
+FROM collegeplacement
+GROUP BY college_id, CGPA, placement
+HAVING CGPA > 8 
+   AND placement = 'NO';
+   
+   
+   SELECT 
+    college_id, 
+    CGPA, 
+    placement
+FROM collegeplacement
+where CGPA > 8 
+ AND placement = 'NO'
+GROUP BY college_id, CGPA, placement;
+----------   Identify students who have low IQ (< average) and low academic performance (< average) but still got placed.
+  SELECT c.College_ID,  c.IQ, c.Academic_Performance, c.Placement
+FROM COLLEGEPLACEMENT c
+WHERE c.IQ < (SELECT AVG(IQ) FROM COLLEGEPLACEMENT)
+  AND c.Academic_Performance < (SELECT AVG(Academic_Performance) FROM COLLEGEPLACEMENT)
+  AND c.Placement = 'Yes';
+  
+  ----------   Find students who scored above average in all soft skills (Communication, Extra_Curricular, Academic_Performance) but still not placed.
+  
+SELECT College_ID, communication_skills, academic_performance, Extra_Curricular_Score 
+FROM CollegePlacement
+WHERE communication_skills > (SELECT AVG(communication_skills) FROM CollegePlacement)
+  AND academic_performance > (SELECT AVG(academic_performance) FROM CollegePlacement)
+  AND Extra_Curricular_Score > (SELECT AVG(Extra_Curricular_Score) FROM CollegePlacement)
+  AND placement = 'no';
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
  
  --------  Intermediate (Aggregations & Grouping)
   
