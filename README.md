@@ -34,7 +34,7 @@ Placement (Yes/No)
 
 🛠️ Tech Stack
 
-SQL (MySQL / SQL Server / PostgreSQL)
+SQL (MySQL)
 
 
 
